@@ -1,67 +1,83 @@
-﻿namespace ZbW.Testing.Dms.Client.ViewModels
+﻿using System;
+using ZbW.Testing.Dms.Client.Services;
+
+namespace ZbW.Testing.Dms.Client.ViewModels
 {
-    using System.Windows;
+	using System.Windows;
+	using Prism.Commands;
+	using Prism.Mvvm;
+	using ZbW.Testing.Dms.Client.Views;
 
-    using Prism.Commands;
-    using Prism.Mvvm;
+	internal class LoginViewModel : BindableBase
+	{
+		private readonly LoginView _loginView;
 
-    using ZbW.Testing.Dms.Client.Views;
+		private string _benutzername;
 
-    internal class LoginViewModel : BindableBase
-    {
-        private readonly LoginView _loginView;
+		private UserService _userService;
 
-        private string _benutzername;
+		public LoginViewModel(LoginView loginView)
+		{
+			_loginView = loginView;
+			_userService = new UserService();
 
-        public LoginViewModel(LoginView loginView)
-        {
-            _loginView = loginView;
-            CmdLogin = new DelegateCommand(OnCmdLogin, OnCanLogin);
-            CmdAbbrechen = new DelegateCommand(OnCmdAbbrechen);
-        }
+			CmdLogin = new DelegateCommand(OnCmdLogin, OnCanLogin);
+			CmdAbbrechen = new DelegateCommand(OnCmdAbbrechen);
 
-        public DelegateCommand CmdAbbrechen { get; }
+			var username = this._userService.GetUsername();
+			this.AutoLoginIfPossible(username);
+		}
 
-        public DelegateCommand CmdLogin { get; }
+		public DelegateCommand CmdAbbrechen { get; }
 
-        public string Benutzername
-        {
-            get
-            {
-                return _benutzername;
-            }
+		public DelegateCommand CmdLogin { get; }
 
-            set
-            {
-                if (SetProperty(ref _benutzername, value))
-                {
-                    CmdLogin.RaiseCanExecuteChanged();
-                }
-            }
-        }
+		public string Benutzername
+		{
+			get { return _benutzername; }
 
-        private bool OnCanLogin()
-        {
-            return !string.IsNullOrEmpty(Benutzername);
-        }
+			set
+			{
+				if (SetProperty(ref _benutzername, value))
+				{
+					CmdLogin.RaiseCanExecuteChanged();
+				}
+			}
+		}
 
-        private void OnCmdAbbrechen()
-        {
-            Application.Current.Shutdown();
-        }
+		private void AutoLoginIfPossible(String username)
+		{
+			if (!String.IsNullOrEmpty(username))
+			{
+				Benutzername = username;
+				this.OnCmdLogin();
+			}
+		}
 
-        private void OnCmdLogin()
-        {
-            if (string.IsNullOrEmpty(Benutzername))
-            {
-                MessageBox.Show("Bitte tragen Sie einen Benutzernamen ein...");
-                return;
-            }
+		private bool OnCanLogin()
+		{
+			return !string.IsNullOrEmpty(Benutzername);
+		}
 
-            var searchView = new MainView(Benutzername);
-            searchView.Show();
+		private void OnCmdAbbrechen()
+		{
+			Application.Current.Shutdown();
+		}
 
-            _loginView.Close();
-        }
-    }
+		private void OnCmdLogin()
+		{
+			if (string.IsNullOrEmpty(Benutzername))
+			{
+				MessageBox.Show("Bitte tragen Sie einen Benutzernamen ein...");
+				return;
+			}
+
+			this._userService.SaveUsername(Benutzername);
+
+			var searchView = new MainView(Benutzername);
+			searchView.Show();
+
+			_loginView.Close();
+		}
+	}
 }

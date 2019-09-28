@@ -1,172 +1,160 @@
-﻿namespace ZbW.Testing.Dms.Client.ViewModels
+﻿using System.Windows;
+using ZbW.Testing.Dms.Client.Model;
+using ZbW.Testing.Dms.Client.Services;
+
+namespace ZbW.Testing.Dms.Client.ViewModels
 {
-    using System;
-    using System.Collections.Generic;
+	using System;
+	using System.Collections.Generic;
+	using Microsoft.Win32;
+	using Prism.Commands;
+	using Prism.Mvvm;
+	using ZbW.Testing.Dms.Client.Repositories;
 
-    using Microsoft.Win32;
+	internal class DocumentDetailViewModel : BindableBase
+	{
+		private readonly Action _navigateBack;
 
-    using Prism.Commands;
-    using Prism.Mvvm;
+		private string _benutzer;
 
-    using ZbW.Testing.Dms.Client.Repositories;
+		private string _bezeichnung;
 
-    internal class DocumentDetailViewModel : BindableBase
-    {
-        private readonly Action _navigateBack;
+		private string _filePath;
 
-        private string _benutzer;
+		private bool _isRemoveFileEnabled;
 
-        private string _bezeichnung;
+		private string _selectedTypItem;
 
-        private DateTime _erfassungsdatum;
+		private string _stichwoerter;
 
-        private string _filePath;
+		private List<string> _typItems;
 
-        private bool _isRemoveFileEnabled;
+		private DateTime? _valutaDatum;
 
-        private string _selectedTypItem;
+		private DocumentService _documentService;
 
-        private string _stichwoerter;
+		public DocumentDetailViewModel(string benutzer, Action navigateBack)
+		{
+			_navigateBack = navigateBack;
+			Benutzer = benutzer;
+			TypItems = ComboBoxItems.Typ;
 
-        private List<string> _typItems;
+			_documentService = new DocumentService();
 
-        private DateTime? _valutaDatum;
+			CmdDurchsuchen = new DelegateCommand(OnCmdDurchsuchen);
+			CmdSpeichern = new DelegateCommand(OnCmdSpeichern);
+		}
 
-        public DocumentDetailViewModel(string benutzer, Action navigateBack)
-        {
-            _navigateBack = navigateBack;
-            Benutzer = benutzer;
-            Erfassungsdatum = DateTime.Now;
-            TypItems = ComboBoxItems.Typ;
+		public string Stichwoerter
+		{
+			get { return _stichwoerter; }
 
-            CmdDurchsuchen = new DelegateCommand(OnCmdDurchsuchen);
-            CmdSpeichern = new DelegateCommand(OnCmdSpeichern);
-        }
+			set { SetProperty(ref _stichwoerter, value); }
+		}
 
-        public string Stichwoerter
-        {
-            get
-            {
-                return _stichwoerter;
-            }
+		public string Bezeichnung
+		{
+			get { return _bezeichnung; }
 
-            set
-            {
-                SetProperty(ref _stichwoerter, value);
-            }
-        }
+			set { SetProperty(ref _bezeichnung, value); }
+		}
 
-        public string Bezeichnung
-        {
-            get
-            {
-                return _bezeichnung;
-            }
+		public List<string> TypItems
+		{
+			get { return _typItems; }
 
-            set
-            {
-                SetProperty(ref _bezeichnung, value);
-            }
-        }
+			set { SetProperty(ref _typItems, value); }
+		}
 
-        public List<string> TypItems
-        {
-            get
-            {
-                return _typItems;
-            }
+		public string SelectedTypItem
+		{
+			get { return _selectedTypItem; }
 
-            set
-            {
-                SetProperty(ref _typItems, value);
-            }
-        }
+			set { SetProperty(ref _selectedTypItem, value); }
+		}
+		
+		public string Benutzer
+		{
+			get { return _benutzer; }
 
-        public string SelectedTypItem
-        {
-            get
-            {
-                return _selectedTypItem;
-            }
+			set { SetProperty(ref _benutzer, value); }
+		}
 
-            set
-            {
-                SetProperty(ref _selectedTypItem, value);
-            }
-        }
+		public DelegateCommand CmdDurchsuchen { get; }
 
-        public DateTime Erfassungsdatum
-        {
-            get
-            {
-                return _erfassungsdatum;
-            }
+		public DelegateCommand CmdSpeichern { get; }
 
-            set
-            {
-                SetProperty(ref _erfassungsdatum, value);
-            }
-        }
+		public DateTime? ValutaDatum
+		{
+			get { return _valutaDatum; }
 
-        public string Benutzer
-        {
-            get
-            {
-                return _benutzer;
-            }
+			set { SetProperty(ref _valutaDatum, value); }
+		}
 
-            set
-            {
-                SetProperty(ref _benutzer, value);
-            }
-        }
+		public bool IsRemoveFileEnabled
+		{
+			get { return _isRemoveFileEnabled; }
 
-        public DelegateCommand CmdDurchsuchen { get; }
+			set { SetProperty(ref _isRemoveFileEnabled, value); }
+		}
 
-        public DelegateCommand CmdSpeichern { get; }
+		private void OnCmdDurchsuchen()
+		{
+			var openFileDialog = new OpenFileDialog();
+			var result = openFileDialog.ShowDialog();
 
-        public DateTime? ValutaDatum
-        {
-            get
-            {
-                return _valutaDatum;
-            }
+			if (result.GetValueOrDefault())
+			{
+				_filePath = openFileDialog.FileName;
+			}
+		}
 
-            set
-            {
-                SetProperty(ref _valutaDatum, value);
-            }
-        }
+		private void OnCmdSpeichern()
+		{
+			if (!this.hasAllRequiredFieldSet())
+			{
+				MessageBox.Show("Es müssen alle Pflichtfelder ausgefüllt werden!");
+				return;
+			}
 
-        public bool IsRemoveFileEnabled
-        {
-            get
-            {
-                return _isRemoveFileEnabled;
-            }
+			if (!this.isDocumentSelected())
+			{
+				MessageBox.Show("Es muss ein Dokument ausgewählt sein.");
+				return;
+			}
 
-            set
-            {
-                SetProperty(ref _isRemoveFileEnabled, value);
-            }
-        }
 
-        private void OnCmdDurchsuchen()
-        {
-            var openFileDialog = new OpenFileDialog();
-            var result = openFileDialog.ShowDialog();
+			this._documentService.AddDocumentToDms(this.CreateMetadataItem());
 
-            if (result.GetValueOrDefault())
-            {
-                _filePath = openFileDialog.FileName;
-            }
-        }
+			_navigateBack();
+		}
 
-        private void OnCmdSpeichern()
-        {
-            // TODO: Add your Code here
+		private MetadataItem CreateMetadataItem()
+		{
+			var metadataItem = new MetadataItem();
+			metadataItem.Benutzer = Properties.Settings.Default.currentUser;
+			metadataItem.Bezeichnung = Bezeichnung;
+			metadataItem.FilePath = this._filePath;
+			metadataItem.IsRemoveFileEnabled = this.IsRemoveFileEnabled;
+			metadataItem.Stichwoerter = this.Stichwoerter;
+			metadataItem.Type = this.SelectedTypItem;
+			metadataItem.ValutaDatum = (DateTime) this.ValutaDatum;
+			metadataItem.Erfassungsdatum = DateTime.Now;
 
-            _navigateBack();
-        }
-    }
+			return metadataItem;
+		}
+
+		private Boolean isDocumentSelected()
+		{
+			return !String.IsNullOrEmpty(this._filePath);
+		}
+
+
+		private Boolean hasAllRequiredFieldSet()
+		{
+			return !String.IsNullOrEmpty(this.Bezeichnung) &&
+			       this.ValutaDatum.HasValue &&
+			       !String.IsNullOrEmpty(this.SelectedTypItem);
+		}
+	}
 }
