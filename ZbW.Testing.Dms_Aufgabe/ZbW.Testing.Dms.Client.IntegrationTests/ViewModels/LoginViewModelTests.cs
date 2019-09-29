@@ -60,8 +60,5 @@ namespace ZbW.Testing.Dms.Client.IntegrationTests.ViewModels
 			Assert.That(result, Is.False);
 		}
 
-		// TODO AutoSaveUsername_HasUsername_IsLoggedin
-		// TODO AutoSaveUsername_EmptyUsername_IsNotLoggedin
-
 	}
 }

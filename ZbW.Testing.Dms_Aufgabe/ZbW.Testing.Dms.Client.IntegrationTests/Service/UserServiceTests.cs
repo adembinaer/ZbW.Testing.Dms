@@ -28,7 +28,6 @@ namespace ZbW.Testing.Dms.Client.IntegrationTests.Service {
 			userService.SaveUsername(username);
 			var result = userService.GetUsername();
 
-			//assert
 			Assert.That(result.Equals(username), Is.True);
 		}
 
@@ -36,13 +35,12 @@ namespace ZbW.Testing.Dms.Client.IntegrationTests.Service {
 		public void SaveUsername_EmptyUsername_IsNotSaved() {
 			// arrage
 			var userService = new UserService();
-			var username = "";
+			var username = "....";
 
 			// act
 			userService.SaveUsername(username);
 			var result = userService.GetUsername();
 
-			//assert
 			Assert.That(result.Equals(username), Is.True);
 		}
 
@@ -52,12 +50,11 @@ namespace ZbW.Testing.Dms.Client.IntegrationTests.Service {
 			var userService = new UserService();
 			string username = null;
 
-			// act
+            // act
 			userService.SaveUsername(username);
 			var result = userService.GetUsername();
 
-			//assert
-			Assert.That(result.Equals(username), Is.False);
+            Assert.That(result.Equals(username), Is.False);
 		}
 	}
 }

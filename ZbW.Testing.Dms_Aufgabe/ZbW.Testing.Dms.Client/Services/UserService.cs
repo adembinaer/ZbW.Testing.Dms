@@ -13,7 +13,7 @@ namespace ZbW.Testing.Dms.Client.Services
 
 		public void SaveUsername(string username)
 		{
-			if (String.IsNullOrEmpty(username))
+			if (string.IsNullOrEmpty(username))
 			{
 				throw new Exception();
 			}
